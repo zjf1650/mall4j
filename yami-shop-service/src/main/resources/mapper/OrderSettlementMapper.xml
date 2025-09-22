@@ -53,4 +53,8 @@
   <update id="updateToPay">
   	update tz_order_settlement set pay_status = 1, version = version +1 where pay_no = #{payNo} and version = #{version}
   </update>
+
+  <select id="getSettlementByOrderNumber" resultType="com.yami.shop.bean.model.OrderSettlement">
+    select * from tz_order_settlement WHERE order_number = #{orderNumber} limit 1
+  </select>
 </mapper>

@@ -33,4 +33,14 @@ public class PayInfoDto {
      * 付款金额
      */
     private Double payAmount;
+
+    /**
+     * 支付表单HTML（用于H5支付）
+     */
+    private String payForm;
+
+    /**
+     * 二维码内容（用于当面付）
+     */
+    private String qrCode;
 }

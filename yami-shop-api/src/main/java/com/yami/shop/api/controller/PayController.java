@@ -41,14 +41,12 @@ public class PayController {
      */
     @PostMapping("/pay")
     @Operation(summary = "根据订单号进行支付" , description = "根据订单号进行支付")
-    public ServerResponseEntity<Void> pay(@RequestBody PayParam payParam) {
+    public ServerResponseEntity<PayInfoDto> pay(@RequestBody PayParam payParam) {
         YamiUser user = SecurityUtils.getUser();
         String userId = user.getUserId();
 
-
         PayInfoDto payInfo = payService.pay(userId, payParam);
-        payService.paySuccess(payInfo.getPayNo(), "");
-        return ServerResponseEntity.success();
+        return ServerResponseEntity.success(payInfo);
     }
 
     /**

@@ -23,6 +23,11 @@
 			<artifactId>yami-shop-security-api</artifactId>
 			<version>${yami.shop.version}</version>
 		</dependency>
+		<dependency>
+			<groupId>com.alipay.sdk</groupId>
+			<artifactId>alipay-sdk-java</artifactId>
+			<version>4.35.79.ALL</version>
+		</dependency>
 	</dependencies>
 
 	<build>

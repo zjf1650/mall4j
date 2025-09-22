@@ -23,6 +23,7 @@ import com.yami.shop.common.exception.YamiShopBindException;
 import com.yami.shop.common.util.Arith;
 import com.yami.shop.dao.OrderMapper;
 import com.yami.shop.dao.OrderSettlementMapper;
+import com.yami.shop.service.AlipayService;
 import com.yami.shop.service.PayService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
@@ -41,10 +42,11 @@ public class PayServiceImpl implements PayService {
     @Autowired
     private OrderMapper orderMapper;
 
-
-
     @Autowired
     private OrderSettlementMapper orderSettlementMapper;
+
+    @Autowired
+    private AlipayService alipayService;
 
 
     @Autowired
@@ -92,6 +94,16 @@ public class PayServiceImpl implements PayService {
         payInfoDto.setBody(prodName.toString());
         payInfoDto.setPayAmount(payAmount);
         payInfoDto.setPayNo(payNo);
+
+        // 根据支付类型处理
+        if (payParam.getPayType() == PayType.ALIPAY_H5.value()) {
+            String form = alipayService.h5Pay(payInfoDto);
+            payInfoDto.setPayForm(form);
+        } else if (payParam.getPayType() == PayType.ALIPAY_FACE_TO_FACE.value()) {
+            String qrCode = alipayService.faceToFacePay(payInfoDto);
+            payInfoDto.setQrCode(qrCode);
+        }
+
         return payInfoDto;
     }
 
@@ -116,11 +128,38 @@ public class PayServiceImpl implements PayService {
         List<String> orderNumbers = orderSettlements.stream().map(OrderSettlement::getOrderNumber).collect(Collectors.toList());
 
         // 将订单改为已支付状态
-        orderMapper.updateByToPaySuccess(orderNumbers, PayType.WECHATPAY.value());
+        orderMapper.updateByToPaySuccess(orderNumbers, settlement.getPayType());
 
         List<Order> orders = orderNumbers.stream().map(orderNumber -> orderMapper.getOrderByOrderNumber(orderNumber)).collect(Collectors.toList());
         eventPublisher.publishEvent(new PaySuccessOrderEvent(orders));
         return orderNumbers;
+    }
+
+    @Override
+    public boolean queryPayStatus(String orderNumbers) {
+        // 根据订单号查询支付单号
+        String[] orderNumberArray = orderNumbers.split(StrUtil.COMMA);
+        if (orderNumberArray.length > 0) {
+            OrderSettlement settlement = orderSettlementMapper.getSettlementByOrderNumber(orderNumberArray[0]);
+            if (settlement != null) {
+                // 如果已经支付，直接返回true
+                if (settlement.getPayStatus() == 1) {
+                    return true;
+                }
+                // 根据支付类型查询支付状态
+                if (settlement.getPayType() == PayType.ALIPAY.value() ||
+                    settlement.getPayType() == PayType.ALIPAY_H5.value() ||
+                    settlement.getPayType() == PayType.ALIPAY_FACE_TO_FACE.value()) {
+                    // 支付宝支付查询
+                    return alipayService.queryPayStatus(settlement.getPayNo());
+                } else if (settlement.getPayType() == PayType.WECHATPAY.value()) {
+                    // 微信支付查询（可扩展）
+                    // TODO: 实现微信支付状态查询
+                    return false;
+                }
+            }
+        }
+        return false;
     }
 
 }

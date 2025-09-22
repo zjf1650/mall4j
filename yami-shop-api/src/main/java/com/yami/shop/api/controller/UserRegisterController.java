@@ -45,12 +45,37 @@ public class UserRegisterController {
     @PostMapping("/register")
     @Operation(summary = "注册" , description = "用户注册或绑定手机号接口")
     public ServerResponseEntity<TokenInfoVO> register(@Valid @RequestBody UserRegisterParam userRegisterParam) {
-        if (StrUtil.isBlank(userRegisterParam.getNickName())) {
-            userRegisterParam.setNickName(userRegisterParam.getUserName());
+        // 校验协议同意状态
+        if (userRegisterParam.getAgreementChecked() == null || !userRegisterParam.getAgreementChecked()) {
+            throw new YamiShopBindException("请先同意用户服务协议和隐私协议");
         }
-        // 正在进行申请注册
-        if (userService.count(new LambdaQueryWrapper<User>().eq(User::getNickName, userRegisterParam.getNickName())) > 0) {
-            // 该用户名已注册，无法重新注册
+
+        // 校验账号格式
+        String userName = userRegisterParam.getUserName();
+        if (StrUtil.isBlank(userName)) {
+            throw new YamiShopBindException("账号不能为空");
+        }
+        if (userName.length() < 4 || userName.length() > 32) {
+            throw new YamiShopBindException("账号长度必须为4-32位");
+        }
+        if (!userName.matches("^[a-zA-Z][a-zA-Z0-9_]*$")) {
+            throw new YamiShopBindException("账号必须以字母开头，只能包含字母、数字、下划线");
+        }
+
+        // 校验密码
+        String decryptPassword = passwordManager.decryptPassword(userRegisterParam.getPassWord());
+        if (StrUtil.isBlank(decryptPassword)) {
+            throw new YamiShopBindException("密码不能为空");
+        }
+        if (decryptPassword.length() < 6 || decryptPassword.length() > 20) {
+            throw new YamiShopBindException("密码长度必须为6-20位");
+        }
+
+        // 将userName作为昵称使用（系统设计中nickName即为用户名）
+        userRegisterParam.setNickName(userRegisterParam.getUserName());
+
+        // 检查用户名是否已存在
+        if (userService.count(new LambdaQueryWrapper<User>().eq(User::getNickName, userRegisterParam.getUserName())) > 0) {
             throw new YamiShopBindException("该用户名已注册，无法重新注册");
         }
         Date now = new Date();
@@ -60,7 +85,6 @@ public class UserRegisterController {
         user.setStatus(1);
         user.setNickName(userRegisterParam.getNickName());
         user.setUserMail(userRegisterParam.getUserMail());
-        String decryptPassword = passwordManager.decryptPassword(userRegisterParam.getPassWord());
         user.setLoginPassword(passwordEncoder.encode(decryptPassword));
         String userId = IdUtil.simpleUUID();
         user.setUserId(userId);

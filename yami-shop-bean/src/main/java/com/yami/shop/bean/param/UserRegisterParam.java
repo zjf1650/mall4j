@@ -46,4 +46,7 @@ public class UserRegisterParam {
 
 	@Schema(description = "用户id" )
 	private Long userId;
+
+	@Schema(description = "是否同意用户协议 true:同意 false:不同意")
+	private Boolean agreementChecked;
 }

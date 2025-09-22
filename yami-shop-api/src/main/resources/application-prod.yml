@@ -4,8 +4,8 @@ server:
 spring:
   datasource:
     url: jdbc:mysql://127.0.0.1:3306/yami_shops?allowMultiQueries=true&useSSL=false&useUnicode=true&characterEncoding=UTF-8&autoReconnect=true&zeroDateTimeBehavior=convertToNull&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=GMT%2B8&nullCatalogMeansCurrent=true
-    username: root
-    password: root
+    username: yami_shops
+    password: m22TppxFYt4dW2Kh
     driver-class-name: com.mysql.cj.jdbc.Driver
     type: com.zaxxer.hikari.HikariDataSource
     hikari:
@@ -15,7 +15,17 @@ spring:
   data:
     redis:
       host: 127.0.0.1
+      password: KrDbyrFHLycj8S5T
       port: 6379
       database: ${REDIS_DATABASE:0}
 logging:
   config: classpath:logback/logback-prod.xml
+
+# 支付宝配置
+alipay:
+  appId: 2021005195608528
+  privateKey: MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCFffGP9ia9Vpa+JF50k5255hNhX0VxEYgpUHi1DQG67AjNfeMUuaJ8XDaX39DlgqE6PUyEN7R6mdiypzcRX7UXRrXiuWLYhm96KENIh+v5SbALDbZUQgQnRMbVXeFtC21WrxzP6v0jsyLwtTgk3Js7/1mBcV12rZG3N4UkEbN+ySHzCaFNOep/CCxXLYnUuI7NK1zAIGBGGQ0mNgDcdg9cRAD09bnSLiuNWfaeh46DIt0LFWyi1ql+lPJdFOSrXjHa4Be/mNeNXBh1Csbr8gkDqs/SK8uXjh1j4dl1IpljSKAKk+aOrlrUN7H1TFgttRxGZRJx3nxBQ0wBJcwfF0eRAgMBAAECggEAXft5Yl1ukMaxglSgm3qCBStSYa9teFlbf5rEINNzcGJVIDeM9D5tgxh45xwQOkVptVMK19tQGTDPO5g2UOkM2cJSs7jJOqALQ/msxRfMrsmOQ3n38AI6YlstkXJzDw6IgArxQgCzD7tC0i0Dxg/6ypbQMS3bG36/pDpWZjqAILXymISbYXmzQQx1V1tsnLzGkUV/2EXHwGjtgG9VdwL8inNS1FHrXibpzayhlk0F+MpphpGUzl7hM4cnJg5lTpmAQyIlERZGFLoZ9tSdjVTMWxRxrVP6KrfQkXkEaKuY610XGa/YukUEAyYk4WxK3IraL8/71QrbBJgKJhY3DOyEMQKBgQD4RyOO6Fn5L++zfXUiaGdzJTh9KQqO/3VI+yQ8vmkqsWhQT7ng65uCwylIuAQeuV3vN0yxvvO0fkwuiSpZmgi4pbheuI8cQBlRPjYk/StF/JetA0K+N9ibiuQrVUDnFfdo8D2umPlziyapMW370ajep07y6iyBCvEe/ETInKXOqwKBgQCJpNh9dxyXybzM5coMQIWOAcPF4WbSryTxabG/SdXVhgpJ9XsOOxg4EQ/nYxeet4vhGuV+/ZxAYOPK7Eageo8dqBpth7JFuiPqHn4N5Hc2KtLh0PzDQWHGmGv4dnrdshuxhy2/LAa3s7c3uoTJdRKHSdodSGg7iBByOm3vXN9SswKBgQCb06J4tlKKOND8Wbij8N1FAs5yl8i9uY42URIMYgIFvrVW+sMSbS38o1sM/hnv4q4XTyD+yneRCFfuOT7wX+Irai/Om42O0JhTSnWXP6LiWUglWc+RLeHwtfrBS8/hegL/xREhvXeLUoHgXVrHW27e2CmQAvQNxf1SUkkllFPo4wKBgHnPZr9x/93cbLcvzKUXHJpVuXmPRj3BPgJfNSxCHXj/TG+zTRmE9qP3hYmSSj7t1F58PQkrS3I1zKGyg7ZVf/4Q3IJ+Cihm2I3COm/09gL71vB80JPDctIb5cFWqNk1XAi5xqReQ/uikcxBxm26q5EKrHopsASvH07Xop6oJAK9AoGAfmOxcOEr3uEJYpq/yPIO4owo2NX3Gf6mBhNXec6k6U0zhLCPbHw6J7PJ3rk0tETIXFdS8szbc3rL2sMNsJaVx5Y04nZNVrC/ggFIrDATQT5hmd4y/t6u3tNTDYrVE1kq2YOAJxkAFjBOPtcUvxylYNH8VEg5zh63GoAEQTeAwBk=
+  publicKey: MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAgCCIP/l9UgkkEUuT25n5W5sgh000IreG+VaNk9ECZqdx9I58WieD9NTfWBqwTaT/bzDgPmxYFyFi0Y6T3iMt0XptAVKajetonuzad4IANH1dLwhf+4Y/5+fGxQHbNGd4B0vmIdCtxOjVf9sbybRcMvh3Bbj3W+yYvmNJ0w8v7dnApygkcZXfdkLg3eDcw43qfbqI7l69CUv5MI9GdBkUHUu9x6CjXAuMytYr0GjTL0A6jUAxktJ0yuLIvcE0nmA5ooB674habvmH+F/KZVOxnzbTNw9JfkFH3AYygVKvQW+7gztfgmStjSkzHibllnOv1durSB47fCVvoWvY4fTjmQIDAQAB
+  serverUrl: https://openapi.alipay.com/gateway.do
+  notifyUrl: http://shunjinmy.com/api-h5/alipay/notify
+  returnUrl: http://shunjinmy.com/pages/pay-result/pay-result

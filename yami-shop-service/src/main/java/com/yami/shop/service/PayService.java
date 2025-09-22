@@ -36,4 +36,11 @@ public interface PayService {
      */
     List<String> paySuccess(String payNo, String bizPayNo);
 
+    /**
+     * 查询支付状态
+     * @param orderNumbers 订单号
+     * @return 是否已支付
+     */
+    boolean queryPayStatus(String orderNumbers);
+
 }

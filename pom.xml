@@ -43,6 +43,7 @@
         <mybatis-spring.version>3.0.3</mybatis-spring.version>
         <!--这个是为了兼容springboot 3.4,knife4j更新这个大于2.7的版本就可以考虑删除掉-->
         <springdoc.version>2.8.4</springdoc.version>
+        <alipay-sdk.version>4.40.452.ALL</alipay-sdk.version>
     </properties>
 
     <dependencyManagement>
@@ -132,6 +133,11 @@
                 <artifactId>spring-cloud-commons</artifactId>
                 <version>${spring-cloud-commons.version}</version>
             </dependency>
+            <dependency>
+                <groupId>com.alipay.sdk</groupId>
+                <artifactId>alipay-sdk-java</artifactId>
+                <version>${alipay-sdk.version}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -178,6 +184,7 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+                <version>${spring-boot.version}</version>
                 <configuration>
                     <layers>
                         <enabled>true</enabled>

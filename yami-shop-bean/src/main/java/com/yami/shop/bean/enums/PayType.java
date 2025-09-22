@@ -17,9 +17,15 @@ public enum PayType {
 
 	/** 微信支付*/
 	WECHATPAY(1,"微信支付"),
-	
-	/** "支付宝*/
-	ALIPAY(2,"支付宝");
+
+	/** 支付宝*/
+	ALIPAY(2,"支付宝"),
+
+	/** 支付宝H5支付*/
+	ALIPAY_H5(6,"支付宝H5支付"),
+
+	/** 支付宝当面付*/
+	ALIPAY_FACE_TO_FACE(7,"支付宝当面付");
 
 	private Integer num;
 	
