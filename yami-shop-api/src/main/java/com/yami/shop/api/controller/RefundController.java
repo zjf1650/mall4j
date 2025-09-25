@@ -11,6 +11,7 @@
 package com.yami.shop.api.controller;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.yami.shop.bean.app.param.OrderRefundExpressParam;
 import com.yami.shop.bean.app.param.RefundApplyParam;
 import com.yami.shop.bean.model.OrderRefund;
 import com.yami.shop.common.response.ServerResponseEntity;
@@ -41,6 +42,14 @@ public class RefundController {
         String userId = SecurityUtils.getUser().getUserId();
         Long refundId = refundService.applyRefund(userId, param);
         return ServerResponseEntity.success(refundId);
+    }
+
+    @PostMapping("/express")
+    @Operation(summary = "提交退货物流信息", description = "退货退款用户填写物流单号")
+    public ServerResponseEntity<Void> submitRefundExpress(@Valid @RequestBody OrderRefundExpressParam param) {
+        String userId = SecurityUtils.getUser().getUserId();
+        refundService.submitRefundExpress(userId, param);
+        return ServerResponseEntity.success();
     }
 
     @GetMapping("/list")

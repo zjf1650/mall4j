@@ -192,6 +192,7 @@ public class OrderRefund implements Serializable {
     /**
      * 拒绝原因
      */
+    @TableField(value = "reject_message", exist = false)
     private String rejectMessage;
 
     /**

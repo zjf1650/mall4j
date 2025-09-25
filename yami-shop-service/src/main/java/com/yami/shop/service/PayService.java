@@ -14,6 +14,7 @@ import com.yami.shop.bean.app.param.PayParam;
 import com.yami.shop.bean.pay.PayInfoDto;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author lgh on 2018/09/15.
@@ -42,5 +43,19 @@ public interface PayService {
      * @return 是否已支付
      */
     boolean queryPayStatus(String orderNumbers);
+
+    /**
+     * 直接通过支付单号查询支付状态
+     * @param payNo 支付单号
+     * @return 是否已支付
+     */
+    boolean queryPayStatusByPayNo(String payNo);
+
+    /**
+     * 通过支付单号查询支付结果（包含订单是否存在）
+     * @param payNo 支付单号
+     * @return 支付结果信息
+     */
+    Map<String, Object> queryPaymentResultByPayNo(String payNo);
 
 }

@@ -47,4 +47,14 @@ public interface AlipayService {
      * @return 是否退款成功
      */
     boolean refund(String outTradeNo, Double refundAmount, String refundReason);
+
+    /**
+     * 支付宝退款（带退款请求号）
+     * @param outTradeNo 商户订单号
+     * @param refundAmount 退款金额
+     * @param refundReason 退款原因
+     * @param outRequestNo 退款请求号，用于部分退款或多次退款
+     * @return 是否退款成功
+     */
+    boolean refund(String outTradeNo, Double refundAmount, String refundReason, String outRequestNo);
 }

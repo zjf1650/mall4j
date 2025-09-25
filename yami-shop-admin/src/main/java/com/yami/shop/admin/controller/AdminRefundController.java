@@ -14,6 +14,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.yami.shop.bean.app.param.RefundAuditParam;
 import com.yami.shop.bean.model.OrderRefund;
 import com.yami.shop.common.response.ServerResponseEntity;
+import com.yami.shop.security.admin.util.SecurityUtils;
 import com.yami.shop.service.RefundService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -42,7 +43,17 @@ public class AdminRefundController {
             @RequestParam(value = "current", defaultValue = "1") Long current,
             @RequestParam(value = "size", defaultValue = "10") Long size,
             @RequestParam(value = "status", required = false) Integer status) {
-        IPage<OrderRefund> refundList = refundService.getMerchantRefundList(current, size, status);
+        // 获取当前登录商户的shopId
+        Long shopId = SecurityUtils.getSysUser().getShopId();
+
+        System.out.println("=== 商家退款列表查询 ===");
+        System.out.println("当前商户ID: " + shopId);
+        System.out.println("查询参数 - current: " + current + ", size: " + size + ", status: " + status);
+
+        IPage<OrderRefund> refundList = refundService.getMerchantRefundList(shopId, current, size, status);
+
+        System.out.println("查询结果 - 总记录数: " + refundList.getTotal() + ", 当前页记录数: " + refundList.getRecords().size());
+
         return ServerResponseEntity.success(refundList);
     }
 
@@ -54,6 +65,13 @@ public class AdminRefundController {
         if (refund == null) {
             return ServerResponseEntity.showFailMsg("退款记录不存在");
         }
+
+        // 验证退款记录是否属于当前商户
+        Long currentShopId = SecurityUtils.getSysUser().getShopId();
+        if (!refund.getShopId().equals(currentShopId)) {
+            return ServerResponseEntity.showFailMsg("无权查看该退款记录");
+        }
+
         return ServerResponseEntity.success(refund);
     }
 

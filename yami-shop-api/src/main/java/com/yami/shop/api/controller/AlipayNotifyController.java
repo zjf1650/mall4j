@@ -10,7 +10,10 @@
 
 package com.yami.shop.api.controller;
 
+import com.alipay.api.AlipayClient;
 import com.alipay.api.internal.util.AlipaySignature;
+import com.alipay.api.request.AlipayTradeQueryRequest;
+import com.alipay.api.response.AlipayTradeQueryResponse;
 import com.yami.shop.api.config.AlipayConfig;
 import com.yami.shop.service.PayService;
 import io.swagger.v3.oas.annotations.Hidden;
@@ -37,6 +40,7 @@ public class AlipayNotifyController {
 
     private final PayService payService;
     private final AlipayConfig alipayConfig;
+    private final AlipayClient alipayClient;
 
     /**
      * 支付异步通知
@@ -47,10 +51,24 @@ public class AlipayNotifyController {
 
         Map<String, String> params = getRequestParams(request);
 
+        // 打印所有回调参数，便于回放测试
+        logger.info("=== 支付宝异步通知参数 ===");
+        for (Map.Entry<String, String> entry : params.entrySet()) {
+            logger.info("参数: {} = {}", entry.getKey(), entry.getValue());
+        }
+        logger.info("=== 参数结束 ===");
+
+        logger.info("支付宝配置 - PublicKey前50位: {}",
+            alipayConfig.getPublicKey() != null ? alipayConfig.getPublicKey().substring(0, Math.min(50, alipayConfig.getPublicKey().length())) : "null");
+        logger.info("支付宝配置 - Charset: {}", alipayConfig.getCharset());
+        logger.info("支付宝配置 - SignType: {}", alipayConfig.getSignType());
+
         try {
             // 验证签名
+            logger.info("开始验证签名...");
             boolean signVerified = AlipaySignature.rsaCheckV1(params,
                 alipayConfig.getPublicKey(), alipayConfig.getCharset(), alipayConfig.getSignType());
+            logger.info("签名验证结果: {}", signVerified);
 
             if (signVerified) {
                 String tradeStatus = params.get("trade_status");
@@ -67,6 +85,7 @@ public class AlipayNotifyController {
                 return "success";
             } else {
                 logger.warn("支付宝回调签名验证失败");
+                logger.warn("请检查: 1.支付宝公钥是否正确 2.参数是否完整 3.字符编码是否一致");
                 return "failure";
             }
         } catch (Exception e) {
@@ -111,16 +130,106 @@ public class AlipayNotifyController {
     public Map<String, Object> queryPayStatus(@RequestParam String orderNumbers) {
         Map<String, Object> result = new HashMap<>();
         try {
+            logger.info("查询订单支付状态，订单号：{}", orderNumbers);
             boolean isPaid = payService.queryPayStatus(orderNumbers);
-            result.put("isPaid", isPaid);
+            result.put("code", "00000");
+            result.put("data", Map.of("isPaid", isPaid));
             result.put("success", true);
         } catch (Exception e) {
             logger.error("查询支付状态失败", e);
-            result.put("isPaid", false);
-            result.put("success", false);
-            result.put("message", e.getMessage());
+            result.put("code", "A00001");
+            result.put("msg", "查询支付状态失败: " + e.getMessage());
+            result.put("data", Map.of("isPaid", false));
         }
         return result;
+    }
+
+    /**
+     * 通过支付单号查询支付状态接口
+     */
+    @GetMapping("/payStatusByPayNo")
+    public Map<String, Object> queryPayStatusByPayNo(@RequestParam String payNo) {
+        Map<String, Object> result = new HashMap<>();
+        try {
+            logger.info("通过支付单号查询支付状态，payNo：{}", payNo);
+
+            // 使用PayService的新方法，它会返回查询结果包含订单是否存在
+            Map<String, Object> paymentResult = payService.queryPaymentResultByPayNo(payNo);
+
+            result.put("code", "00000");
+            result.put("data", paymentResult);
+
+            logger.info("支付单号查询结果：payNo={}, 结果={}", payNo, paymentResult);
+
+        } catch (Exception e) {
+            logger.error("通过支付单号查询支付状态失败", e);
+            result.put("code", "A00001");
+            result.put("msg", "查询支付状态失败: " + e.getMessage());
+            result.put("data", Map.of("isPaid", false, "orderExists", false));
+        }
+        return result;
+    }
+
+    /**
+     * 查询支付宝支付状态接口
+     */
+    @GetMapping("/queryPayStatus")
+    public Map<String, Object> queryAlipayPayStatus(@RequestParam String orderNumbers) {
+        Map<String, Object> result = new HashMap<>();
+        try {
+            logger.info("查询支付宝支付状态，订单号：{}", orderNumbers);
+
+            // 调用支付宝查询接口
+            AlipayTradeQueryRequest request = new AlipayTradeQueryRequest();
+            request.setBizContent("{\"out_trade_no\":\"" + orderNumbers + "\"}");
+
+            AlipayTradeQueryResponse response = alipayClient.execute(request);
+            logger.info("支付宝查询响应：{}", response.getBody());
+
+            if (response.isSuccess()) {
+                String tradeStatus = response.getTradeStatus();
+                boolean isPaid = "TRADE_SUCCESS".equals(tradeStatus) || "TRADE_FINISHED".equals(tradeStatus);
+
+                result.put("code", "00000");
+                result.put("data", Map.of(
+                    "isPaid", isPaid,
+                    "tradeStatus", tradeStatus,
+                    "tradeNo", response.getTradeNo()
+                ));
+
+                logger.info("支付宝查询结果：订单号={}, 支付状态={}, 是否已支付={}",
+                    orderNumbers, tradeStatus, isPaid);
+            } else {
+                logger.warn("支付宝查询失败：{}", response.getSubMsg());
+                result.put("code", "A00001");
+                result.put("msg", "支付宝查询失败: " + response.getSubMsg());
+                result.put("data", Map.of("isPaid", false));
+            }
+        } catch (Exception e) {
+            logger.error("查询支付宝支付状态失败", e);
+            result.put("code", "A00001");
+            result.put("msg", "查询支付状态失败: " + e.getMessage());
+            result.put("data", Map.of("isPaid", false));
+        }
+        return result;
+    }
+
+    /**
+     * 测试支付成功接口（仅用于测试）
+     */
+    @PostMapping("/testPaySuccess")
+    public String testPaySuccess(@RequestParam String outTradeNo,
+                                @RequestParam(required = false) String tradeNo) {
+        try {
+            logger.info("测试支付成功接口调用，订单号：{}", outTradeNo);
+            String testTradeNo = tradeNo != null ? tradeNo : "TEST_" + System.currentTimeMillis();
+            payService.paySuccess(outTradeNo, testTradeNo);
+            logger.info("测试支付成功处理完成，订单号：{}", outTradeNo);
+            return "success";
+        } catch (Exception e) {
+            logger.error("测试支付成功处理失败", e);
+            return "failure";
+        }
     }
 
     /**

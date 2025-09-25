@@ -140,6 +140,11 @@ public class AlipayServiceImpl implements AlipayService {
 
     @Override
     public boolean refund(String outTradeNo, Double refundAmount, String refundReason) {
+        return refund(outTradeNo, refundAmount, refundReason, null);
+    }
+
+    @Override
+    public boolean refund(String outTradeNo, Double refundAmount, String refundReason, String outRequestNo) {
         AlipayTradeRefundRequest request = new AlipayTradeRefundRequest();
 
         AlipayTradeRefundModel model = new AlipayTradeRefundModel();
@@ -147,13 +152,18 @@ public class AlipayServiceImpl implements AlipayService {
         model.setRefundAmount(String.valueOf(refundAmount));
         model.setRefundReason(refundReason);
 
+        // 设置退款请求号，用于部分退款或多次退款的场景
+        if (outRequestNo != null && !outRequestNo.trim().isEmpty()) {
+            model.setOutRequestNo(outRequestNo);
+        }
+
         request.setBizModel(model);
 
         try {
             AlipayTradeRefundResponse response = alipayClient.execute(request);
             if (response.isSuccess()) {
                 // 退款成功的判断条件
-                return "Y".equals(response.getFundChange());
+                return "10000".equals(response.getCode());
             }
             return false;
         } catch (AlipayApiException e) {

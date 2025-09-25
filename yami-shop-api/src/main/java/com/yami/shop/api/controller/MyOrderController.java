@@ -59,6 +59,8 @@ public class MyOrderController {
 
     private final OrderItemService orderItemService;
 
+    private final RefundService refundService;
+
 
     /**
      * 订单详情信息接口
@@ -96,6 +98,17 @@ public class MyOrderController {
         orderShopDto.setCreateTime(order.getCreateTime());
         orderShopDto.setRemarks(order.getRemarks());
         orderShopDto.setStatus(order.getStatus());
+        orderShopDto.setPayType(order.getPayType());
+
+        // 查询退款状态 - 临时简化处理避免异常
+        Integer refundStatus = 0;
+        try {
+            refundStatus = refundService.getRefundStatusByOrderNumber(orderNumber);
+        } catch (Exception e) {
+            // 如果查询退款状态失败，默认为未退款
+            refundStatus = 0;
+        }
+        orderShopDto.setRefundStatus(refundStatus != null ? refundStatus : 0);
 
         double total = 0.0;
         Integer totalNum = 0;

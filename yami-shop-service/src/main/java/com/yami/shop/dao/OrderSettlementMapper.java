@@ -54,4 +54,11 @@ public interface OrderSettlementMapper extends BaseMapper<OrderSettlement> {
 	 * @return
 	 */
 	OrderSettlement getSettlementByOrderNumber(@Param("orderNumber") String orderNumber);
+
+	/**
+	 * 根据支付单号获取单个结算信息
+	 * @param payNo
+	 * @return
+	 */
+	OrderSettlement getSettlementByPayNo(@Param("payNo") String payNo);
 }

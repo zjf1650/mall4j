@@ -25,6 +25,8 @@ import com.yami.shop.dao.OrderMapper;
 import com.yami.shop.dao.OrderSettlementMapper;
 import com.yami.shop.service.AlipayService;
 import com.yami.shop.service.PayService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -38,6 +40,8 @@ import java.util.stream.Collectors;
  */
 @Service
 public class PayServiceImpl implements PayService {
+
+    private static final Logger log = LoggerFactory.getLogger(PayServiceImpl.class);
 
     @Autowired
     private OrderMapper orderMapper;
@@ -160,6 +164,121 @@ public class PayServiceImpl implements PayService {
             }
         }
         return false;
+    }
+
+    @Override
+    public boolean queryPayStatusByPayNo(String payNo) {
+        log.info("=== 开始通过支付单号查询支付状态 ===");
+        log.info("PayNo: {}", payNo);
+
+        try {
+            // 根据支付单号查询支付信息
+            log.info("查询数据库中的支付信息...");
+            OrderSettlement settlement = orderSettlementMapper.getSettlementByPayNo(payNo);
+
+            if (settlement != null) {
+                log.info("找到支付信息: PayNo={}, PayStatus={}, PayType={}, OrderNumber={}",
+                    settlement.getPayNo(), settlement.getPayStatus(), settlement.getPayType(), settlement.getOrderNumber());
+
+                // 如果已经支付，直接返回true
+                if (settlement.getPayStatus() == 1) {
+                    log.info("数据库显示已支付，直接返回true");
+                    return true;
+                }
+
+                log.info("数据库显示未支付，根据支付类型查询第三方支付状态...");
+
+                // 根据支付类型查询支付状态
+                if (settlement.getPayType() == PayType.ALIPAY.value() ||
+                    settlement.getPayType() == PayType.ALIPAY_H5.value() ||
+                    settlement.getPayType() == PayType.ALIPAY_FACE_TO_FACE.value()) {
+                    // 支付宝支付查询
+                    log.info("调用支付宝查询接口...");
+                    boolean alipayResult = alipayService.queryPayStatus(payNo);
+                    log.info("支付宝查询结果: {}", alipayResult);
+                    return alipayResult;
+                } else if (settlement.getPayType() == PayType.WECHATPAY.value()) {
+                    // 微信支付查询（可扩展）
+                    // TODO: 实现微信支付状态查询
+                    log.info("微信支付查询暂未实现");
+                    return false;
+                } else {
+                    log.warn("未知支付类型: {}", settlement.getPayType());
+                    return false;
+                }
+            } else {
+                log.warn("数据库中未找到支付单号: {}", payNo);
+            }
+        } catch (Exception e) {
+            log.error("通过支付单号查询支付状态失败，payNo: {}", payNo, e);
+        }
+
+        log.info("=== 支付状态查询结束，返回false ===");
+        return false;
+    }
+
+    @Override
+    public Map<String, Object> queryPaymentResultByPayNo(String payNo) {
+        log.info("=== 开始查询支付结果，包含订单存在性 ===");
+        log.info("PayNo: {}", payNo);
+
+        Map<String, Object> result = new HashMap<>();
+
+        try {
+            // 根据支付单号查询支付信息
+            log.info("查询数据库中的支付信息...");
+            OrderSettlement settlement = orderSettlementMapper.getSettlementByPayNo(payNo);
+
+            if (settlement == null) {
+                log.warn("数据库中未找到支付单号: {}", payNo);
+                result.put("isPaid", false);
+                result.put("orderExists", false);
+                result.put("message", "未找到对应的订单信息");
+                return result;
+            }
+
+            log.info("找到支付信息: PayNo={}, PayStatus={}, PayType={}, OrderNumber={}",
+                settlement.getPayNo(), settlement.getPayStatus(), settlement.getPayType(), settlement.getOrderNumber());
+
+            result.put("orderExists", true);
+            result.put("orderNumber", settlement.getOrderNumber());
+
+            // 如果已经支付，直接返回true
+            if (settlement.getPayStatus() == 1) {
+                log.info("数据库显示已支付，直接返回true");
+                result.put("isPaid", true);
+                return result;
+            }
+
+            log.info("数据库显示未支付，根据支付类型查询第三方支付状态...");
+
+            // 根据支付类型查询支付状态
+            if (settlement.getPayType() == PayType.ALIPAY.value() ||
+                settlement.getPayType() == PayType.ALIPAY_H5.value() ||
+                settlement.getPayType() == PayType.ALIPAY_FACE_TO_FACE.value()) {
+                // 支付宝支付查询
+                log.info("调用支付宝查询接口...");
+                boolean alipayResult = alipayService.queryPayStatus(payNo);
+                log.info("支付宝查询结果: {}", alipayResult);
+                result.put("isPaid", alipayResult);
+            } else if (settlement.getPayType() == PayType.WECHATPAY.value()) {
+                // 微信支付查询（可扩展）
+                log.info("微信支付查询暂未实现");
+                result.put("isPaid", false);
+            } else {
+                log.warn("未知支付类型: {}", settlement.getPayType());
+                result.put("isPaid", false);
+            }
+
+        } catch (Exception e) {
+            log.error("通过支付单号查询支付结果失败，payNo: {}", payNo, e);
+            result.put("isPaid", false);
+            result.put("orderExists", false);
+            result.put("error", e.getMessage());
+        }
+
+        log.info("=== 支付结果查询结束，返回: {} ===", result);
+        return result;
     }
 
 }

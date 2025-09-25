@@ -84,4 +84,16 @@ public class OrderShopDto implements Serializable {
      */
     @Schema(description = "订单状态" ,requiredMode = Schema.RequiredMode.REQUIRED)
     private Integer status;
+
+    /**
+     * 支付方式
+     */
+    @Schema(description = "支付方式 1:微信支付 2:支付宝 6:支付宝H5支付 7:支付宝当面付")
+    private Integer payType;
+
+    /**
+     * 退款状态
+     */
+    @Schema(description = "退款状态 0:未退款 1:申请退款中 2:退款成功 3:退款失败")
+    private Integer refundStatus;
 }
